@@ -100,4 +100,4 @@ async def on_message(message):
 
     
 
-client.run("MTA5MTI1OTg5MDQ1MTg5MDIwOA.GGgAE8.ulXgnZAuDyeLU55Ukd_Vu3ahQ4qxNAytkhgpo4")
+client.run("MTA5MTI1OTg5MDQ1MTg5MDIwOA.GGgAE8.ulXgnZAuDyeLU55Ukd_Vu3ahQ4qxNAytkhgpo4") #token exemple
