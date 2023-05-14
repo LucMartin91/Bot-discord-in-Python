@@ -1,70 +1,24 @@
+
 import discord
 import os
 from discord.ext import commands
+from dotenv import load_dotenv
 import asyncio
-
+from decisiontree import DecisionTree
+from linkedlist import Node, DoublyLinkedList
 intents = discord.Intents.all()
-
-
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next_node = None
-        self.prev_node = None
-
-
-class DoublyLinkedList:
-    def __init__(self):
-        self.head = None
-        self.tail = None
-        self.size = 0
-
-
-    def append(self, data):
-        new_node = Node(data)
-        if self.head is None: #Si la liste est vide, alors le nouveau node est = à la tête et à la queue de la liste
-            self.head = self.tail = new_node
-        else:
-            new_node.prev_node = self.tail
-            self.tail.next_node = new_node
-            self.tail = new_node
-        self.size += 1
-
-    def clear(self):
-        self.head = None
-        self.tail = None
-        self.size = 0
-
-    def get_last_n_messages(self, n):
-        messages = []
-        current_node = self.tail
-        while current_node is not None and n > 0:
-            messages.append(current_node.data)
-            current_node = current_node.prev_node
-            n -= 1
-        return messages[::-1]
-
-class DecisionTree:
-    def __init__(self, question=None, yes_branch=None, no_branch=None, answer=None):
-        self.question = question
-        self.yes_branch = yes_branch
-        self.no_branch = no_branch
-        self.answer = answer
-
-    def is_leaf(self):
-        return self.yes_branch is None and self.no_branch is None
 
 help_tree = DecisionTree(
     "Avez-vous besoin d'aide pour les commandes ?",
     yes_branch=DecisionTree(
-        "Cherchez-vous des commandes pour les administrateurs ?",
+        "Cherchez-vous des commandes pour les admins ?",
         yes_branch=DecisionTree(answer="Voici la liste des commandes pour les administrateurs :\n```!purge_all\n!addwhitelist\n!removewhitelist```"),
-        no_branch=DecisionTree(answer="Voici la liste des commandes pour les utilisateurs :\n```\n!helpme\n!speak about\n!lastcmd\n!history\n!précédant\n!suivant\n!quitterhistory```"),
+        no_branch=DecisionTree(answer="Voici la liste des commandes pour les utilisateurs :\n```\n!helpme\n!speak about\n!last_command\n!history\n!précédent\n!suivant\n!quitterhistory```"),
     ),
     no_branch=DecisionTree(
         "Avez-vous besoin d'aide pour jouer à un jeu ?",
         yes_branch=DecisionTree(answer="Voici comment jouer au Puissance 4 : \n /puissance4 and enjoy :)"),
-        no_branch=DecisionTree(answer="D'accord, si vous avez besoin d'aide ultérieurement, tapez simplement /helpme."),
+        no_branch=DecisionTree(answer="Très bien, si vous avez besoin d'aide ultérieurement, tapez simplement /helpme."),
     ),
 )
 
@@ -296,5 +250,7 @@ async def on_message(message):
 
   await client.process_commands(message)
 
-    
-client.run("TOKEN")
+#récupération du token dans le .env et lancement du bot !
+load_dotenv()
+token = os.getenv('TOKEN')
+client.run(token)
