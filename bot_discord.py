@@ -2,6 +2,8 @@
 import discord
 import os
 import random
+import wikipedia
+import openai
 import string
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -15,7 +17,7 @@ help_tree = DiscussTree(
     "Avez-vous besoin d'aide pour les commandes ?",
     yes_branch=DiscussTree(
         "Cherchez-vous des commandes pour les admins ?",
-        yes_branch=DiscussTree(answer="Voici la liste des commandes pour les administrateurs :\n```!purge_all\n!addwhitelist\n!removewhitelist```"),
+        yes_branch=DiscussTree(answer="Voici la liste des commandes pour les administrateurs :\n```!purge_all\n!addwhitelist\n!removewhitelist\n!ban```"),
         no_branch=DiscussTree(answer="Voici la liste des commandes pour les utilisateurs :\n```\n!helpme\n!speak_about\n!last_command\n!history\n!précédent\n!suivant\n!quitterhistory```"),
     ),
     no_branch=DiscussTree(
@@ -31,6 +33,16 @@ user_message_count = {}
 #Sécurité pour qu'un seul utilisateur puisse utiliser l'historique en même temps !
 is_history_locked = False
 history_locked_by = None
+# Liste des mots possibles dans le pendu
+mots = ["python", "programmation", "discord", "bot", "jouer", "pendu", "projet"]
+# Le chemin d'accès au fichier de whitelist
+WHITELIST_FILE_PATH = "whitelist.txt"
+# La liste de whitelist
+whitelisted_users = []
+
+# Fonction pour récupérer un mot aléatoire
+def get_mot_aleatoire():
+    return random.choice(mots)
 
 # Charger la liste de whitelist à partir du fichier
 def load_whitelist():
@@ -39,6 +51,7 @@ def load_whitelist():
         with open(WHITELIST_FILE_PATH, "r") as f:
             for line in f:
                 whitelisted_users.append(int(line.strip()))
+
 
 # Enregistrer la liste de whitelist dans le fichier
 def save_whitelist():
@@ -172,15 +185,21 @@ async def help_command(ctx):
 async def reset_command(ctx):
     await help_command(ctx)
 
+#On veut récupérer le résumé en français 
+wikipedia.set_lang("fr")
+
 @client.command(name="speak_about")
 async def speak_about_command(ctx, *, subject: str):
-    subjects_handled = ["commandes", "aide", "python"]
-    if subject.lower() in subjects_handled:
-        await ctx.send(f"Oui, je peux parler de {subject}.")
-    else:
-        await ctx.send(f"Non, je ne peux pas parler de {subject}. De toute façon si je ne connais pas ça veut juste dire que ça sert à rien donc abandonne.")
+    try:
+        summary = wikipedia.summary(subject, sentences=3, auto_suggest=True)
+        await ctx.send(f"Oui, je peux parler de {subject}. Voici un résumé de ce que j'ai trouvé: ```{summary}```")
+    except wikipedia.exceptions.PageError:
+        await ctx.send(f"Je suis désolé, je ne peux pas trouver d'informations sur {subject}. Pensez éventuellement à préciser votre recherche.")
+    except wikipedia.exceptions.DisambiguationError as e:
+        options = "\n".join([f"{i+1}. {option}" for i, option in enumerate(e.options[:10])])
+        await ctx.send(f"Je ne suis pas sûr de ce que vous voulez dire. Veuillez choisir une option parmi les suivantes:\n{options}")
 
-spam_tracker = {}
+
         
 
 @client.command(name="ban")
@@ -195,7 +214,7 @@ async def ban_user(ctx, member: discord.Member):
 
 @client.command(name="last_command")
 async def last_command(ctx):
-    await history(ctx, n=1)
+    await history(ctx, n=2)
 
 
 @client.command(name="salut") 
@@ -250,43 +269,8 @@ async def remove_from_whitelist(ctx, member: discord.Member):
     else:
         await ctx.send(f"{member.display_name} n'est pas dans la liste blanche.")
 
-
-
-
-
-@client.event
-async def on_ready():
-    print("Le bot est prêt !")
-
-
-@client.event
-async def on_member_join(member):
-    general_channel = client.get_channel(1044900412551073832)
-    await general_channel.send("Bienvenue sur le serveur ! "+ member.name)
-
-
-
-@client.event
-async def on_message(message):
-  if message.author == client.user:
-    return
-  
-  message.content = message.content.lower()
-
-  if message.content.startswith("hello"):
-    await message.channel.send("Hello")
-
-  if message.content == "azerty":
-    await message.channel.send("qwerty")
-
-  await client.process_commands(message)
-
 # Liste des mots possibles
 mots = ["python", "programmation", "discord", "bot", "jouer", "pendu", "projet"]
-
-# Fonction pour récupérer un mot aléatoire
-def get_mot_aleatoire():
-    return random.choice(mots)
 
 # Commande de jeu de pendu
 @client.command(name="pendu")
@@ -315,6 +299,41 @@ async def pendu(ctx):
     else:
         await ctx.send(f"Dommage, vous avez perdu. Le mot était '{mot}'.")
 
+
+openai.api_key = "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"
+@client.command(name="askgpt")
+async def ask(ctx, *, question):
+    # Call OpenAI API to generate a response
+    response = openai.Completion.create(
+        engine="davinci", 
+        prompt=f"Q: {question}\nA:", 
+        max_tokens=1024, 
+        n=1, 
+        stop=None, 
+        temperature=0.7,
+    )
+
+@client.event
+async def on_ready():
+    print("Le bot est prêt !")
+
+@client.event
+async def on_message(message):
+  if message.author == client.user:
+    return
+  
+  message.content = message.content.lower()
+
+  if message.content.startswith("hello"):
+    await message.channel.send("Hello")
+
+  if message.content == "azerty":
+    await message.channel.send("qwerty")
+
+  await client.process_commands(message)
+
+#chargement de la whitelist depuis le txt
+load_whitelist()
 #récupération du token dans le .env et lancement du bot !
 load_dotenv()
 token = os.getenv('TOKEN')
