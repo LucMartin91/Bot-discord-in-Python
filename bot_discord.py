@@ -6,34 +6,28 @@ import string
 from discord.ext import commands
 from dotenv import load_dotenv
 import asyncio
-from decisiontree import DecisionTree
+from decisiontree import DiscussTree
 from linkedlist import Node, DoublyLinkedList
 from pendu import Pendu
-intents = discord.Intents.all()
 
-help_tree = DecisionTree(
+intents = discord.Intents.all()
+help_tree = DiscussTree(
     "Avez-vous besoin d'aide pour les commandes ?",
-    yes_branch=DecisionTree(
+    yes_branch=DiscussTree(
         "Cherchez-vous des commandes pour les admins ?",
-        yes_branch=DecisionTree(answer="Voici la liste des commandes pour les administrateurs :\n```!purge_all\n!addwhitelist\n!removewhitelist```"),
-        no_branch=DecisionTree(answer="Voici la liste des commandes pour les utilisateurs :\n```\n!helpme\n!speak about\n!last_command\n!history\n!précédent\n!suivant\n!quitterhistory```"),
+        yes_branch=DiscussTree(answer="Voici la liste des commandes pour les administrateurs :\n```!purge_all\n!addwhitelist\n!removewhitelist```"),
+        no_branch=DiscussTree(answer="Voici la liste des commandes pour les utilisateurs :\n```\n!helpme\n!speak_about\n!last_command\n!history\n!précédent\n!suivant\n!quitterhistory```"),
     ),
-    no_branch=DecisionTree(
+    no_branch=DiscussTree(
         "Avez-vous besoin d'aide pour jouer à un jeu ?",
-        yes_branch=DecisionTree(answer="Voici comment jouer au Puissance 4 : \n /puissance4 and enjoy :)"),
-        no_branch=DecisionTree(answer="Très bien, si vous avez besoin d'aide ultérieurement, tapez simplement /helpme."),
+        yes_branch=DiscussTree(answer="Voici comment jouer au pendu : \n !pendu , puis tentez de trouver le mot caché ! Vous aurez 8 vies."),
+        no_branch=DiscussTree(answer="Très bien, si vous avez besoin d'aide ultérieurement, tapez simplement !helpme."),
     ),
 )
-
-
-
-
-
 client = commands.Bot(command_prefix="!", intents = intents)
 whitelisted_users = []
 user_history_index = {}
 user_message_count = {}
-
 #Sécurité pour qu'un seul utilisateur puisse utiliser l'historique en même temps !
 is_history_locked = False
 history_locked_by = None
@@ -70,14 +64,6 @@ async def history(ctx, user: discord.Member = None, n: int = 10, offset: int = 0
     # Si aucun utilisateur n'est spécifié, l'utilisateur courant sera utilisé
     if user is None:
         user = ctx.author
-    
-    # compter tous ses messages dans le canal courant qui commencent par "!" (préfixe de commande)
-        message_total = 0   
-        async for message in ctx.channel.history(limit=None):
-            if message.author == user and message.content.startswith("!"):
-                message_total += 1
-        # Ajouter le nombre total de messages de l'utilisateur dans le dictionnaire "user_message_count"
-        user_message_count[user.id] = message_total
 
     # Définir l'index de départ de l'historique de l'utilisateur
     is_history_locked = True
@@ -98,6 +84,13 @@ async def history(ctx, user: discord.Member = None, n: int = 10, offset: int = 0
 
     # Récupérer les dernières n commandes de l'historique des messages
     last_messages = messages_history.get_last_n_messages(n)
+# compter tous ses messages dans le canal courant qui commencent par "!" (préfixe de commande)
+    message_total = 0   
+    async for message in ctx.channel.history(limit=None):
+        if message.author == user and message.content.startswith("!"):
+            message_total += 1
+        # Ajouter le nombre total de messages de l'utilisateur dans le dictionnaire "user_message_count"
+    user_message_count[user.id] = message_total
     
     # Créer une réponse qui affiche l'index de départ, l'index de fin, le nombre total de messages de l'utilisateur et les n dernières commandes valides
     response = f"Index de l'historique : {offset}-{offset + len(last_messages)} / {message_total}\n"
@@ -176,6 +169,16 @@ async def speak_about_command(ctx, *, subject: str):
 spam_tracker = {}
         
 
+@client.command(name="ban")
+@commands.has_permissions(ban_members=True)
+async def ban_user(ctx, member: discord.Member):
+    # Vérifier si l'utilisateur à bannir est dans la liste blanche
+    if member.id in whitelisted_users:
+        await ctx.author.send(f"L'utilisateur {member.mention} ne peut pas être banni car il est dans la liste blanche.")
+    else:
+        await member.ban()
+        await ctx.send(f"L'utilisateur {member.mention} a été banni.")
+
 @client.command(name="last_command")
 async def last_command(ctx):
     await history(ctx, n=1)
@@ -206,12 +209,13 @@ async def purge_all(ctx):
     # Confirmer que tous les messages ont été supprimés
     await ctx.send("Tous les messages ont été supprimés du serveur.")
 
+
+
 @client.command(name="addwhitelist")
 @commands.has_permissions(administrator=True)
 async def add_to_whitelist(ctx, member: discord.Member):
     if member.id not in whitelisted_users:
         whitelisted_users.append(member.id)
-        await member.edit(nick=f"[esprit]{member.display_name}")
         await ctx.send(f"{member.display_name} a été ajouté à la liste blanche.")
     else:
         await ctx.send(f"{member.display_name} est déjà dans la liste blanche.")
@@ -222,7 +226,6 @@ async def add_to_whitelist(ctx, member: discord.Member):
 async def remove_from_whitelist(ctx, member: discord.Member):
     if member.id in whitelisted_users:
         whitelisted_users.remove(member.id)
-        await member.edit(nick=member.name)
         await ctx.send(f"{member.display_name} a été retiré de la liste blanche.")
     else:
         await ctx.send(f"{member.display_name} n'est pas dans la liste blanche.")
