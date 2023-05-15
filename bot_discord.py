@@ -1,11 +1,14 @@
 
 import discord
 import os
+import random
+import string
 from discord.ext import commands
 from dotenv import load_dotenv
 import asyncio
 from decisiontree import DecisionTree
 from linkedlist import Node, DoublyLinkedList
+from pendu import Pendu
 intents = discord.Intents.all()
 
 help_tree = DecisionTree(
@@ -224,6 +227,11 @@ async def remove_from_whitelist(ctx, member: discord.Member):
     else:
         await ctx.send(f"{member.display_name} n'est pas dans la liste blanche.")
 
+
+
+
+
+
 @client.event
 async def on_ready():
     print("Le bot est prêt !")
@@ -233,6 +241,7 @@ async def on_ready():
 async def on_member_join(member):
     general_channel = client.get_channel(1044900412551073832)
     await general_channel.send("Bienvenue sur le serveur ! "+ member.name)
+
 
 
 @client.event
@@ -249,6 +258,40 @@ async def on_message(message):
     await message.channel.send("qwerty")
 
   await client.process_commands(message)
+
+# Liste des mots possibles
+mots = ["python", "programmation", "discord", "bot", "jouer", "pendu", "projet"]
+
+# Fonction pour récupérer un mot aléatoire
+def get_mot_aleatoire():
+    return random.choice(mots)
+
+# Commande de jeu de pendu
+@client.command(name="pendu")
+async def pendu(ctx):
+    mot = get_mot_aleatoire()
+    pendu = Pendu(mot)
+    mot_masque = pendu.get_mot_masque()
+
+    message = await ctx.send(f"Le mot à deviner est : {mot_masque}. Vous avez {pendu.vies} vies.")
+    while not pendu.est_fini():
+        def check(message):
+            return message.author == ctx.author and message.channel == ctx.channel and len(message.content) == 1 and message.content.lower() in string.ascii_lowercase and message.content.lower() not in pendu.lettres_trouvees.union(pendu.lettres_fausses)
+
+        try:
+            lettre = await client.wait_for("message", check=check, timeout=30.0)
+        except asyncio.TimeoutError:
+            await ctx.send("Temps écoulé, le jeu est terminé.")
+            return
+
+        pendu.jouer(lettre.content)
+        mot_masque = pendu.get_mot_masque()
+        message = await message.edit(content=f"Le mot à deviner est : {mot_masque}. Vous avez {pendu.vies} vies.\nLettres fausses : {', '.join(sorted(pendu.lettres_fausses))}")
+        
+    if pendu.vies > 0:
+        await ctx.send(f"Bravo, vous avez trouvé le mot '{mot}' !")
+    else:
+        await ctx.send(f"Dommage, vous avez perdu. Le mot était '{mot}'.")
 
 #récupération du token dans le .env et lancement du bot !
 load_dotenv()
