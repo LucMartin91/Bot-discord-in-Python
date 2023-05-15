@@ -31,12 +31,26 @@ ARBRE DE DISCUSSION
 -Possibilité de reset notre position dans l'arbre grace à une commande !reset
 
 
-SPEAK ABOUT (Version améliorée du speak about classique demandé par lénoncé)
-
+SPEAK_ABOUT (Version améliorée du speak about classique demandé par lénoncé)
+-Utilisation : !speak_about (ce que tu cherches)
 -Utilisation de l'API Wikipedia pour un bot ayant le plus de connaissances possibles !
 -Paramètre de langue de l'API update en français.
 -Précision demandée en cas déchec de recherche par le bot dans l'API.
 -Suggestion de différents sujets trouvés par l'API (les 10 premiers) si la question débouche sur plusieurs sujets (exemple Apple peut donner Apple Inc. Ou bien la pomme (fruit)).
+
+WHITELIST
+
+-Whitelist donnant accès à un grade invisible qui empêche d'être banni via le !ban
+-utilisable uniquement par un admin
+-Deux commandes, !addwhitelist et !removewhitelist pour gérer la whitelist
+-Stockage et update de la whitelist à chaque changement dans un TXT pour pouvoir éteindre le bot sereinement tout en ayant un fichier mémoire qui sera re-chargé, ou re-créé s'il n'existe pas.
+
+!BAN
+
+-Commande basique qui requiert le pouvoir d'administrateur pour bannir un user (uniquement pas whitelisté)
+
+PENDU
+-Jeu du pendu utilisable via !pendu avec un message qui s'update à chaque tour pour éviter le spam, un timer et une liste de mots dans laquel le mot caché est choisi aléatoirement.
 
 
 
