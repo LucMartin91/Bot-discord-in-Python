@@ -32,6 +32,20 @@ user_message_count = {}
 is_history_locked = False
 history_locked_by = None
 
+# Charger la liste de whitelist à partir du fichier
+def load_whitelist():
+    global whitelisted_users
+    if os.path.exists(WHITELIST_FILE_PATH):
+        with open(WHITELIST_FILE_PATH, "r") as f:
+            for line in f:
+                whitelisted_users.append(int(line.strip()))
+
+# Enregistrer la liste de whitelist dans le fichier
+def save_whitelist():
+    with open(WHITELIST_FILE_PATH, "w") as f:
+        for user_id in whitelisted_users:
+            f.write(str(user_id) + "\n")
+
 @client.command(name="quitterhistory")
 async def clear_history(ctx, user_id: discord.Member = None):
     global is_history_locked
@@ -160,11 +174,11 @@ async def reset_command(ctx):
 
 @client.command(name="speak_about")
 async def speak_about_command(ctx, *, subject: str):
-    subjects_handled = ["python", "java", "javascript", "ruby", "c++", "c#"]
+    subjects_handled = ["commandes", "aide", "python"]
     if subject.lower() in subjects_handled:
         await ctx.send(f"Oui, je peux parler de {subject}.")
     else:
-        await ctx.send(f"Non, je ne peux pas parler de {subject}.")
+        await ctx.send(f"Non, je ne peux pas parler de {subject}. De toute façon si je ne connais pas ça veut juste dire que ça sert à rien donc abandonne.")
 
 spam_tracker = {}
         
@@ -210,26 +224,31 @@ async def purge_all(ctx):
     await ctx.send("Tous les messages ont été supprimés du serveur.")
 
 
+# Le chemin d'accès au fichier de whitelist
+WHITELIST_FILE_PATH = "whitelist.txt"
+# La liste de whitelist
+whitelisted_users = []
+load_whitelist()
 
 @client.command(name="addwhitelist")
 @commands.has_permissions(administrator=True)
 async def add_to_whitelist(ctx, member: discord.Member):
     if member.id not in whitelisted_users:
         whitelisted_users.append(member.id)
+        save_whitelist()
         await ctx.send(f"{member.display_name} a été ajouté à la liste blanche.")
     else:
         await ctx.send(f"{member.display_name} est déjà dans la liste blanche.")
-
 
 @client.command(name="removewhitelist")
 @commands.has_permissions(administrator=True)
 async def remove_from_whitelist(ctx, member: discord.Member):
     if member.id in whitelisted_users:
         whitelisted_users.remove(member.id)
+        save_whitelist()
         await ctx.send(f"{member.display_name} a été retiré de la liste blanche.")
     else:
         await ctx.send(f"{member.display_name} n'est pas dans la liste blanche.")
-
 
 
 
