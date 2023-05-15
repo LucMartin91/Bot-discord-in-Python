@@ -54,6 +54,8 @@ PENDU
 
 -Jeu du pendu utilisable via !pendu avec un message qui s'update à chaque tour pour éviter le spam, un timer et une liste de mots dans laquel le mot caché est choisi aléatoirement.
 
+PROTECTION DU TOKEN
 
+-Stockage du token dans un .ENV non divulgué ici pour garder une sécurité totale sur mon BOT personnel et éviter de laisser le token à la vue de tous.
 
 
