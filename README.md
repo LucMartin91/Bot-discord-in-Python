@@ -32,6 +32,7 @@ ARBRE DE DISCUSSION
 
 
 SPEAK_ABOUT (Version améliorée du speak about classique demandé par lénoncé)
+
 -Utilisation : !speak_about (ce que tu cherches)
 -Utilisation de l'API Wikipedia pour un bot ayant le plus de connaissances possibles !
 -Paramètre de langue de l'API update en français.
@@ -50,6 +51,7 @@ WHITELIST
 -Commande basique qui requiert le pouvoir d'administrateur pour bannir un user (uniquement pas whitelisté)
 
 PENDU
+
 -Jeu du pendu utilisable via !pendu avec un message qui s'update à chaque tour pour éviter le spam, un timer et une liste de mots dans laquel le mot caché est choisi aléatoirement.
 
 
